@@ -1,5 +1,3 @@
-# see the following example for SelectorGroupChat
-# https://microsoft.github.io/autogen/0.4.0.dev12/user-guide/agentchat-user-guide/tutorial/selector-group-chat.html
 import asyncio
 
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
@@ -191,6 +189,26 @@ You are the **DataAnalystAgent**, responsible for creating a comprehensive **Rep
 - **For the Report output document, use a file name indicated by the Planning Agent**
 """
 
+# System prompt for the VendorFinancialAgent responsible for mining financial statements of vendors.
+vendor_financial_system_prompt = """
+### **Role Definition**
+You are the **VendorFinancialAgent**, responsible for mining financial statements of vendors. You will analyze the financial data provided in the `Vendor_Financial_Statements.csv` file and generate insights based on the data.
+
+---
+
+### **Instructions**
+
+1. **Data Analysis**:
+   - Process the financial statements data from the `Vendor_Financial_Statements.csv` file.
+   - Generate insights and summaries based on the financial data.
+   - Clearly label each insight and summary with the corresponding vendor name.
+
+2. **Data Sources**:
+   - Use only the `Vendor_Financial_Statements.csv` file provided to you.
+   - **All generated insights and summaries must rely solely on this file. DO NOT fabricate or extrapolate data.**
+
+"""
+
 # Create the planner agent.
 # The planner agent is responsible for orchestrating the task, breaking it down into subtasks, and delegating them to other agents.
 planner_agent = AssistantAgent(
@@ -246,6 +264,26 @@ data_analyst_agent = OpenAIAssistantAgent(
     tools=["code_interpreter"],
 )
 
+# Create an Azure OpenAI Assistants agent as the Vendor Financial Agent
+# Uses the financial statements data to generate insights and summaries.
+vendor_financial_agent = OpenAIAssistantAgent(
+    name="VendorFinancialAgent",
+    description="An agent for mining financial statements of vendors, analyzing the financial data provided, and generating insights based on the data.",
+    client=az_openai_client,
+    temperature=0,
+    model=az_deployment_name,
+    instructions=vendor_financial_system_prompt,
+    assistant_id=config.az_openai_vendor_financial_assistant_id,
+    tools=["code_interpreter"],
+    tool_resources={
+        "code_interpreter": {
+            "file_ids": [
+                config.az_data_file_vendor_financial_statements_file_id,
+            ]
+        }
+    },
+)
+
 
 # Define a termination condition that stops the task if the critic approves.
 text_mention_termination = TextMentionTermination("TERMINATE")
@@ -254,7 +292,7 @@ termination = text_mention_termination | max_messages_termination
 
 # create a team to collaborate and accomplish the task
 team = SelectorGroupChat(
-    [planner_agent, coder_agent, data_analyst_agent],
+    [planner_agent, coder_agent, data_analyst_agent, vendor_financial_agent],
     model_client=az_model_client,
     termination_condition=termination,
 )
@@ -270,7 +308,7 @@ def download_document():
     )
     for _file in client.files.list():
         # print(_file.filename)
-        if _file.filename == "/mnt/data/"+file_name:
+        if (_file.filename == "/mnt/data/"+file_name) or (_file.filename == "/mnt/data/Vendor_Financial_Statements.csv"):
             doc_data = client.files.content(_file.id)
             doc_data_bytes = doc_data.read()
             with open("./"+file_name, "wb") as file:
@@ -292,7 +330,7 @@ def delete_inprocess_files():
 # Use `asyncio.run(...)` when running in a script.
 async def main():
 
-    task = "Get me the sales performance for the month of July 2024 please!"
+    task = "Get me the sales performance for the month of July 2024 please! Also, mine the financial statements of vendors."
     await Console(team.run_stream(task=task))
     download_document()
     delete_inprocess_files()
