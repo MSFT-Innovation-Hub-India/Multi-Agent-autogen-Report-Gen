@@ -38,6 +38,20 @@ See screen shot below:
 
 ![alt text](./images/image2.png)
 
+3. Create the Vendor Financial Assistant
+
+- Paste the system prompt for this assistant from app.py.
+- Enable the code interpreter
+- Upload the (Vendor_Financial_Statements.csv)Vendor Financial Statements file to this Assistants API. Note down the Vendor Financial Agents Assistants API ID. This has to be set in the .env file of the application.
+
+See screen shot below:
+
+![alt text](./images/image3.png)
+
+- Note down the File ID of the file you uploaded above. See screen shot below:
+
+![alt text](./images/image4.png)
+
 ## Setup
 1. Clone the repository.
 2. Create a virtual environment and activate it:
@@ -58,8 +72,10 @@ See screen shot below:
     az_openai_api_version="2024-08-01-preview"
     az_openai_coder_assistant_id="asst_lefWVQYL02ZIjy7ZXHgAVQjk"
     az_openai_analyst_assistant_id="asst_9zxvPj2SqqTWTj5bpGLTpJOn"
+    az_openai_vendor_financial_assistant_id="asst_9zxvPj2SqqTWTj5bpGLTpJOn"
     az_data_file_products_master_file_id="assistant-WPw9Mzf1q2EfLts21NLh45ld"
     az_data_file_products_sales_file_id="assistant-cEZqBjjPyduNl5ttXfOOPHB2"
+    az_data_file_vendor_financial_statements_file_id="assistant-cEZqBjjPyduNl5ttXfOOPHB2"
     ```
 
 ## Usage
@@ -84,6 +100,7 @@ A sample Word document generated from the app run is stored in the folder [here]
 - **PlanningAgent**: Orchestrates the task, breaks it down into subtasks, and delegates them to other agents.
 - **CodingAgent**: Generates data tables from the input files.
 - **DataAnalystAgent**: Creates visualizations, insights, and compiles the final report document.
+- **VendorFinancialAgent**: Mines financial statements of vendors, analyzes the financial data provided, and generates insights based on the data.
 
 ## Contributing
 Feel free to open issues or submit pull requests for any improvements or bug fixes.
